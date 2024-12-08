@@ -1,0 +1,8 @@
+yarn.lock
+package-lock.json
+config.json
+node_modules/
+*.h
+*.hpp
+*.c
+*.cpp
