@@ -7,7 +7,7 @@ const capitalize = string => string.charAt(0).toUpperCase() + string.slice(1);
 const getDatatype = (sql_data_type, sql_column_type) => {
     if (sql_data_type === 'int') return 'sqlpp::integer';
     else if (sql_data_type === 'bigint') return 'sqlpp::bigint';
-    else if (sql_data_type === 'smallint') return 'sqlpp::integer'; // SQLPP не имеет smallint напрямую
+    else if (sql_data_type === 'smallint') return 'sqlpp::integer'; // sqlpp11 не имеет smallint напрямую
     else if (sql_data_type === 'tinyint' && sql_column_type === 'tinyint(1)') return 'sqlpp::boolean';
     else if (sql_data_type === 'tinyint') return 'sqlpp::integer'; // tinyint интерпретируется как integer
     else if (sql_data_type === 'mediumint') return 'sqlpp::integer'; // mediumint интерпретируется как integer
@@ -24,9 +24,9 @@ const getDatatype = (sql_data_type, sql_column_type) => {
     else if (sql_data_type === 'datetime') return 'sqlpp::time_point';
     else if (sql_data_type === 'timestamp') return 'sqlpp::time_point';
     else if (sql_data_type === 'time') return 'sqlpp::time_of_day';
-    else if (sql_data_type === 'year') return 'sqlpp::integer'; // Год как integer
-    else if (sql_data_type === 'enum') return 'sqlpp::text'; // SQLPP не поддерживает enum напрямую
-    else if (sql_data_type === 'set') return 'sqlpp::text'; // SQLPP не поддерживает set напрямую
+    else if (sql_data_type === 'year') return 'sqlpp::integer'; // год интерпретируется как integer
+    else if (sql_data_type === 'enum') return 'sqlpp::text'; // sqlpp11 не поддерживает enum напрямую
+    else if (sql_data_type === 'set') return 'sqlpp::text'; // sqlpp11 не поддерживает set напрямую
     else if (sql_data_type === 'binary') return 'sqlpp::blob';
     else if (sql_data_type === 'varbinary') return 'sqlpp::blob';
     else if (sql_data_type === 'blob') return 'sqlpp::blob';
@@ -68,7 +68,7 @@ async function main() {
     if(!tableName) return console.error('Usage: node generator.js <table_name> <file?>');
 
     const [rows] = await connection.execute(`
-        SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, EXTRA, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, COLUMN_TYPE
+        SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, EXTRA, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, COLUMN_TYPE, COLUMN_DEFAULT
         FROM INFORMATION_SCHEMA.COLUMNS 
         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
     `, [connection.config.database, tableName]);
@@ -111,6 +111,20 @@ async function main() {
     out += `\t\t\t};\n`;
     out += `\t\t};\n`;
     out += `\t};\n`;
+    out += `\n`;
+    out += `\ttemplate <typename RowType>\n`;
+    out += `\tjson ${tableName}_to_json(const RowType & row) {\n`;
+    out += `\t\tjson result;\n`;
+    out += `\n`;
+
+    for(let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        out += `\t\tresult["${row.COLUMN_NAME}"] = row.${row.COLUMN_NAME}.value();\n`;
+    }
+
+    out += `\n`;
+    out += `\t\treturn result;\n`;
+    out += `\t}\n`;
     out += `}\n`;
 
     if(outputFile) {
