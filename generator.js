@@ -113,8 +113,8 @@ async function main() {
     out += `\t};\n`;
     out += `\n`;
     out += `\ttemplate <typename RowType>\n`;
-    out += `\tjson ${tableName}_to_json(const RowType & row) {\n`;
-    out += `\t\tjson result;\n`;
+    out += `\tnlohmann::json ${tableName}_to_json(const RowType & row) {\n`;
+    out += `\t\tnlohmann::json result;\n`;
     out += `\n`;
 
     for(let i = 0; i < rows.length; i++) {
