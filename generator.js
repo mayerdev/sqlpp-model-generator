@@ -2,6 +2,15 @@ const mysql = require('mysql2/promise');
 const config = require('./config.json');
 const fs = require('fs');
 
+function convertToCamelCase(str) {
+    return str.split('_').map((word, index) => {
+        if (index === 0) {
+            return word.charAt(0).toUpperCase() + word.slice(1);
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join('');
+}
+
 const capitalize = string => string.charAt(0).toUpperCase() + string.slice(1);
 
 const getDatatype = (sql_data_type, sql_column_type) => {
@@ -75,7 +84,7 @@ async function main() {
 
     let out = '#pragma once\n\n';
     out += 'namespace models {\n';
-    out += `\tnamespace ${capitalize(tableName)}_ {\n`;
+    out += `\tnamespace ${convertToCamelCase(tableName)}_ {\n`;
     
     for(let i = 0; i < rows.length; i++) {
         const row = rows[i];
@@ -99,7 +108,7 @@ async function main() {
 
     out += `\t}\n`;
     out += `\n`;
-    out += `\tstruct ${capitalize(tableName)} : sqlpp::table_t<${capitalize(tableName)}, ${buildStructFields(capitalize(tableName) + '_', rows.map(item => item.COLUMN_NAME))}> {\n`;
+    out += `\tstruct ${convertToCamelCase(tableName)} : sqlpp::table_t<${convertToCamelCase(tableName)}, ${buildStructFields(convertToCamelCase(tableName) + '_', rows.map(item => item.COLUMN_NAME))}> {\n`;
     out += `\t\tstruct _alias_t {\n`;
     out += `\t\t\tstatic constexpr const char _literal[] = "${tableName}";\n`;
     out += `\t\t\tusing _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;\n`;
