@@ -11,6 +11,15 @@ function convertToCamelCase(str) {
     }).join('');
 }
 
+function pluralToSingular(word) {
+    if (word.endsWith('ies')) {
+        return word.slice(0, -3) + 'y';
+    } else if (word.endsWith('s')) {
+        return word.slice(0, -1);
+    }
+    return word;
+}
+
 const capitalize = string => string.charAt(0).toUpperCase() + string.slice(1);
 
 const getDatatype = (sql_data_type, sql_column_type) => {
@@ -82,7 +91,11 @@ async function main() {
         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
     `, [connection.config.database, tableName]);
 
-    let out = '#pragma once\n\n';
+    let out = '#pragma once\n';
+    out += '\n';
+    out += `#define MODEL_${tableName.toUpperCase()} const models::${convertToCamelCase(tableName)} ${pluralToSingular(tableName)};\n`;
+    out += `#define MODEL_${tableName.toUpperCase()}_AS(name) const models::${convertToCamelCase(tableName)} name;\n`;
+    out += '\n';
     out += 'namespace models {\n';
     out += `\tnamespace ${convertToCamelCase(tableName)}_ {\n`;
     
